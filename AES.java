@@ -1,8 +1,5 @@
-import java.util.Arrays;
-
 public class AES {
 
-	private static final int nb = 4;
 	private static final int[][] sBox = new int[][] {
 			{ 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
 					0x2b, 0xfe, 0xd7, 0xab, 0x76 },
@@ -173,7 +170,7 @@ public class AES {
 		int[][] statePrime = new int[4][4];
 		for (int r = 0; r < 4; r++)
 			for (int c = 0; c < 4; c++)
-				statePrime[r][c] = state[r][(c + r) % nb];
+				statePrime[r][c] = state[r][(c + r) % 4];
 
 		for (int r = 0; r < 4; r++)
 			for (int c = 0; c < 4; c++)
@@ -188,7 +185,7 @@ public class AES {
 
 	private static void addRoundKey(int[][] state, int[] w, int round) {
 		int[][] statePrime = new int[4][4];
-		int l = round * nb;
+		int l = round * 4;
 
 		for (int c = 0; c < 4; c++) {
 			statePrime[0][c] = state[0][c] ^ (w[l + c] >> 24) & 0xff;
@@ -206,14 +203,14 @@ public class AES {
 		int nk = key.length / 4;
 		int nr = nk + 6;
 
-		int[] w = new int[nb * (nr + 1)];
+		int[] w = new int[4 * (nr + 1)];
 		int temp;
 
 		for (int i = 0; i < nk; i++)
 			w[i] = word(key[4 * i], key[4 * i + 1], key[4 * i + 2],
 					key[4 * i + 3]);
 
-		for (int i = nk; i < nb * (nr + 1); i++) {
+		for (int i = nk; i < 4 * (nr + 1); i++) {
 			temp = w[i - 1];
 			if (i % nk == 0)
 				temp = subWord(rotWord(temp)) ^ Rcon[i / nk];
