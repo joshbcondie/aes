@@ -84,13 +84,25 @@ public class AES {
 
 	public static void main(String[] args) {
 		Scanner scanner = new Scanner(System.in);
+		System.out.print("[E]ncode or [d]ecode: ");
+		String method = scanner.nextLine();
+
 		System.out.print("Input: ");
 		String input = scanner.nextLine();
+
 		System.out.print("Key: ");
 		String key = scanner.nextLine();
+
 		scanner.close();
-		int[] output = cipher(stringToBytes(input), stringToBytes(key));
-		System.out.println("Output: " + bytesToString(output));
+
+		if (method.toUpperCase().startsWith("E"))
+			System.out.println("Output: "
+					+ bytesToString(cipher(stringToBytes(input),
+							stringToBytes(key))));
+		else
+			System.out.println("Output: "
+					+ bytesToString(invCipher(stringToBytes(input),
+							stringToBytes(key))));
 	}
 
 	private static int[] stringToBytes(String s) {
@@ -146,6 +158,36 @@ public class AES {
 		return output;
 	}
 
+	private static int[] invCipher(int[] input, int[] key) {
+
+		int[][] state = new int[4][4];
+		for (int r = 0; r < 4; r++)
+			for (int c = 0; c < 4; c++)
+				state[r][c] = input[r + 4 * c];
+
+		int[] w = keyExpansion(key);
+		int nr = key.length / 4 + 6;
+
+		addRoundKey(state, w, nr);
+		for (int round = nr - 1; round >= 1; round--) {
+			invShiftRows(state);
+			invSubBytes(state);
+			addRoundKey(state, w, round);
+			invMixColumns(state);
+		}
+
+		invShiftRows(state);
+		invSubBytes(state);
+		addRoundKey(state, w, 0);
+
+		int[] output = new int[16];
+		for (int r = 0; r < 4; r++)
+			for (int c = 0; c < 4; c++)
+				output[r + 4 * c] = state[r][c];
+
+		return output;
+	}
+
 	private static void mixColumns(int[][] state) {
 		int[][] statePrime = new int[4][4];
 		int[] multiply2 = new int[4];
@@ -172,6 +214,33 @@ public class AES {
 				state[r][c] = statePrime[r][c];
 	}
 
+	private static void invMixColumns(int[][] state) {
+		int[][] statePrime = new int[4][4];
+
+		for (int c = 0; c < 4; c++) {
+			statePrime[0][c] = ffMultiply(0x0e, state[0][c])
+					^ ffMultiply(0x0b, state[1][c])
+					^ ffMultiply(0x0d, state[2][c])
+					^ ffMultiply(0x09, state[3][c]);
+			statePrime[1][c] = ffMultiply(0x09, state[0][c])
+					^ ffMultiply(0x0e, state[1][c])
+					^ ffMultiply(0x0b, state[2][c])
+					^ ffMultiply(0x0d, state[3][c]);
+			statePrime[2][c] = ffMultiply(0x0d, state[0][c])
+					^ ffMultiply(0x09, state[1][c])
+					^ ffMultiply(0x0e, state[2][c])
+					^ ffMultiply(0x0b, state[3][c]);
+			statePrime[3][c] = ffMultiply(0x0b, state[0][c])
+					^ ffMultiply(0x0d, state[1][c])
+					^ ffMultiply(0x09, state[2][c])
+					^ ffMultiply(0x0e, state[3][c]);
+		}
+
+		for (int r = 0; r < 4; r++)
+			for (int c = 0; c < 4; c++)
+				state[r][c] = statePrime[r][c];
+	}
+
 	private static void shiftRows(int[][] state) {
 		int[][] statePrime = new int[4][4];
 		for (int r = 0; r < 4; r++)
@@ -183,10 +252,27 @@ public class AES {
 				state[r][c] = statePrime[r][c];
 	}
 
+	private static void invShiftRows(int[][] state) {
+		int[][] statePrime = new int[4][4];
+		for (int r = 0; r < 4; r++)
+			for (int c = 0; c < 4; c++)
+				statePrime[r][(c + r) % 4] = state[r][c];
+
+		for (int r = 0; r < 4; r++)
+			for (int c = 0; c < 4; c++)
+				state[r][c] = statePrime[r][c];
+	}
+
 	private static void subBytes(int[][] state) {
 		for (int r = 0; r < 4; r++)
 			for (int c = 0; c < 4; c++)
 				state[r][c] = sBox[state[r][c] >> 4][state[r][c] & 0x0f];
+	}
+
+	private static void invSubBytes(int[][] state) {
+		for (int r = 0; r < 4; r++)
+			for (int c = 0; c < 4; c++)
+				state[r][c] = invSBox[state[r][c] >> 4][state[r][c] & 0x0f];
 	}
 
 	private static void addRoundKey(int[][] state, int[] w, int round) {
