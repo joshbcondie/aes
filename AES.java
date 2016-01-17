@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 public class AES {
 
 	private static final int[][] sBox = new int[][] {
@@ -81,10 +83,14 @@ public class AES {
 			0x3A000000, 0x74000000, 0xE8000000, 0xCB000000, 0x8D000000 };
 
 	public static void main(String[] args) {
-		String input = "00112233445566778899aabbccddeeff";
-		String key = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+		Scanner scanner = new Scanner(System.in);
+		System.out.print("Input: ");
+		String input = scanner.nextLine();
+		System.out.print("Key: ");
+		String key = scanner.nextLine();
+		scanner.close();
 		int[] output = cipher(stringToBytes(input), stringToBytes(key));
-		System.out.println(bytesToString(output));
+		System.out.println("Output: " + bytesToString(output));
 	}
 
 	private static int[] stringToBytes(String s) {
