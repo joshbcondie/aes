@@ -96,13 +96,9 @@ public class AES {
 		scanner.close();
 
 		if (method.toUpperCase().startsWith("E"))
-			System.out.println("Output: "
-					+ bytesToString(cipher(stringToBytes(input),
-							stringToBytes(key))));
+			bytesToString(cipher(stringToBytes(input), stringToBytes(key)));
 		else
-			System.out.println("Output: "
-					+ bytesToString(invCipher(stringToBytes(input),
-							stringToBytes(key))));
+			bytesToString(invCipher(stringToBytes(input), stringToBytes(key)));
 	}
 
 	private static int[] stringToBytes(String s) {
@@ -128,7 +124,22 @@ public class AES {
 		return s;
 	}
 
+	private static String wordsToString(int[] w, int round) {
+		String s = "";
+		for (int i = 0; i < 4; i++)
+			s += String.format("%08x", w[i + round * 4]);
+		return s;
+	}
+
+	private static String format(int num) {
+		if (num >= 10)
+			return num + "";
+		return " " + num;
+	}
+
 	private static int[] cipher(int[] input, int[] key) {
+
+		System.out.println("round[ 0].input    " + bytesToString(input));
 
 		int[][] state = new int[4][4];
 		for (int r = 0; r < 4; r++)
@@ -139,27 +150,50 @@ public class AES {
 		int nr = key.length / 4 + 6;
 
 		addRoundKey(state, w, 0);
+		System.out.println("round[ 0].k_sch    " + wordsToString(w, 0));
 		for (int round = 1; round <= nr - 1; round++) {
+			System.out.println("round[" + format(round) + "].start    "
+					+ stateToString(state));
 			subBytes(state);
+			System.out.println("round[" + format(round) + "].s_box    "
+					+ stateToString(state));
 			shiftRows(state);
+			System.out.println("round[" + format(round) + "].s_row    "
+					+ stateToString(state));
 			mixColumns(state);
+			System.out.println("round[" + format(round) + "].m_col    "
+					+ stateToString(state));
 			addRoundKey(state, w, round);
+			System.out.println("round[" + format(round) + "].k_sch    "
+					+ wordsToString(w, round));
 		}
 
+		System.out.println("round[" + format(nr) + "].start    "
+				+ stateToString(state));
 		subBytes(state);
+		System.out.println("round[" + format(nr) + "].s_box    "
+				+ stateToString(state));
 		shiftRows(state);
+		System.out.println("round[" + format(nr) + "].s_row    "
+				+ stateToString(state));
 		addRoundKey(state, w, nr);
+		System.out.println("round[" + format(nr) + "].k_sch    "
+				+ wordsToString(w, nr));
 
 		int[] output = new int[16];
 		for (int r = 0; r < 4; r++)
 			for (int c = 0; c < 4; c++)
 				output[r + 4 * c] = state[r][c];
 
+		System.out.println("round[" + format(nr) + "].output   "
+				+ bytesToString(output));
 		return output;
 	}
 
 	private static int[] invCipher(int[] input, int[] key) {
 
+		System.out.println("round[ 0].iinput   " + bytesToString(input));
+
 		int[][] state = new int[4][4];
 		for (int r = 0; r < 4; r++)
 			for (int c = 0; c < 4; c++)
@@ -169,22 +203,43 @@ public class AES {
 		int nr = key.length / 4 + 6;
 
 		addRoundKey(state, w, nr);
+		System.out.println("round[ 0].ik_sch   " + wordsToString(w, nr));
 		for (int round = nr - 1; round >= 1; round--) {
+			System.out.println("round[" + format(nr - round) + "].istart   "
+					+ stateToString(state));
 			invShiftRows(state);
+			System.out.println("round[" + format(nr - round) + "].is_row   "
+					+ stateToString(state));
 			invSubBytes(state);
+			System.out.println("round[" + format(nr - round) + "].is_box   "
+					+ stateToString(state));
 			addRoundKey(state, w, round);
+			System.out.println("round[" + format(nr - round) + "].ik_sch   "
+					+ wordsToString(w, round));
+			System.out.println("round[" + format(nr - round) + "].ik_add   "
+					+ stateToString(state));
 			invMixColumns(state);
 		}
 
+		System.out.println("round[" + format(nr) + "].istart   "
+				+ stateToString(state));
 		invShiftRows(state);
+		System.out.println("round[" + format(nr) + "].is_row   "
+				+ stateToString(state));
 		invSubBytes(state);
+		System.out.println("round[" + format(nr) + "].is_box   "
+				+ stateToString(state));
 		addRoundKey(state, w, 0);
+		System.out.println("round[" + format(nr) + "].ik_sch   "
+				+ wordsToString(w, 0));
 
 		int[] output = new int[16];
 		for (int r = 0; r < 4; r++)
 			for (int c = 0; c < 4; c++)
 				output[r + 4 * c] = state[r][c];
 
+		System.out.println("round[" + nr + "].ioutput  "
+				+ bytesToString(output));
 		return output;
 	}
 
@@ -355,11 +410,11 @@ public class AES {
 		return sum;
 	}
 
-	private static void printState(int[][] state) {
-		for (int r = 0; r < 4; r++) {
-			for (int c = 0; c < 4; c++)
-				System.out.printf("%x, ", state[r][c]);
-			System.out.println();
-		}
+	private static String stateToString(int[][] state) {
+		String s = "";
+		for (int c = 0; c < 4; c++)
+			for (int r = 0; r < 4; r++)
+				s += bytesToString(new int[] { state[r][c] });
+		return s;
 	}
 }
